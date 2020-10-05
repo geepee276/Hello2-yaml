@@ -1,0 +1,48 @@
+
+#getting setup - this assumes a GCP account, docker hub account and a running GKE cluster
+
+git clone https://github.com/geepee276/hello2 								# pulls the code from Github
+cd hello2												# change to the correct working drectory
+docker login 												# login to the correct docker image repo with your username / password
+export PROJECT_ID=<enter the project ID here>
+
+
+#create the docker image to deploy
+docker image build -t gcr.io/${PROJECT_ID}/hello2 . 							# builds the docker image called 'hello2'
+docker image ls 											# should show the docker image 'hello2' along with 'alpine'
+docker push gcr.io/${PROJECT_ID}/hello2									# pushes the image to a K8s repo so that k8s can use / access it
+
+
+#check the GKE is running
+gcloud compute instances list										# check for a running k8s cluster
+
+#create the K8s deployment
+kubectl create deployment hello2 --image=gcr/${PROJECT_ID}/hello2					# creates a Kubernetes service called 'hello2' based on our Docker image
+kubectl scale deployment hello --replicas=3								# ensures we always have 3 replicas of the app
+kubectl get pods											# should show 3 running instances of the app - each name should start with 'hello2...' followed by a hyphen and a string of letters and numbers
+kubectl expose deployment hello2 --name=hello2 --type=LoadBalancer --port 5000 --target-port 5000	# exposes the service to an external IP address which everyone can then use to access the service
+kubectl get service 											# keep running this - eventually it'll change from PENDING' to an actual IP address. Have people navigate to this address on port 5000 i.e. http://34.78.253.185:5000/ to see the message
+
+#change the docker code
+vi app.py												# update the message, then press ESCAPE then :wq to write the new file
+
+#update the docker image
+docker image build -t hello2 .										# should see just a few bytes updated
+
+#push out the new image you just built
+docker push gcr.io/${PROJECT_ID}/hello2:latest								# pushes out a new version of hello2 with the update message
+
+#open a new cloud shell tab in order to be able to see the rolling update in real time - press the '+' button which has a down arrow next to it on the Cloud Shell part of the screen.'
+watch kubectl get pods											# this will show the three running pods in real time - when we do the next command, switch back here to see the rolling update happen
+
+#tell K8s to use the new image - SWITCH BACK TO THE ORIGINAL CLOUD SHELL SCREEN!!
+kubectl set image deployment/hello2 hello2=gcr.io/${PROJECT_ID}/hello2:latest				# switch back to see the rolling update
+
+#have people navigate to the same IP and they should see the new message...
+
+
+
+
+
+
+
