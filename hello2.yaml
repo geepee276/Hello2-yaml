@@ -4,7 +4,7 @@ metadata:
   name: hello2
 spec:
   selector:
-    matchlabels:
+    matchLabels:
       app: hello2
   replicas: 3
   template:
@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: hello2
-          image: gcr.io/${PROJECT_ID}/hello2
+          image: gcr.io/${PROJECT_ID/hello2
           ports:
-            containerPort: 5000
+            - containerPort: 5000
