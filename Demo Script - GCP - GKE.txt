@@ -1,10 +1,11 @@
 
 #getting setup - this assumes a GCP account, docker hub account and a running GKE cluster
 
-git clone https://github.com/geepee276/hello2 								# pulls the code from Github
-cd hello2												# change to the correct working drectory
+git clone https://github.com/geepee276/hello2-yaml 								# pulls the code from Github
+cd hello2-yaml												# change to the correct working drectory
 docker login 												# login to the correct docker image repo with your username / password
 export PROJECT_ID=<enter the project ID here>
+sed -i "s/\${PROJECT_ID}/$PROJECT_ID/g" hello2.yaml
 
 
 #create the docker image to deploy
@@ -13,10 +14,24 @@ docker image ls 											# should show the docker image 'hello2' along with 'a
 docker push gcr.io/${PROJECT_ID}/hello2									# pushes the image to a K8s repo so that k8s can use / access it
 
 
+
 #check the GKE is running
 gcloud compute instances list										# check for a running k8s cluster
 
-#create the K8s deployment
+#create the K8s deployment from a YAML file
+kubectl create -f hello2.yaml
+kubectl get pods
+kubectl get service
+kubectl expose deployment hello2 --name=hello2 --type=LoadBalancer --port=5000 --target-port=5000
+
+
+
+
+
+
+
+
+# or do it manually...
 kubectl create deployment hello2 --image=gcr/${PROJECT_ID}/hello2					# creates a Kubernetes service called 'hello2' based on our Docker image
 kubectl scale deployment hello --replicas=3								# ensures we always have 3 replicas of the app
 kubectl get pods											# should show 3 running instances of the app - each name should start with 'hello2...' followed by a hyphen and a string of letters and numbers
